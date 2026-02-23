@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.output/
+
+# Private config (copy config.example.ts → config.ts to set up locally)
+app/lib/config.ts
+
+# Vite / TanStack Router generated files
+app/routeTree.gen.ts
+*.timestamp_*.js
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Editor
+.DS_Store
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
