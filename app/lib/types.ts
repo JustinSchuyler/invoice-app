@@ -3,8 +3,7 @@ export type TemplateId = 'classic' | 'modern' | 'minimal'
 export interface LineItem {
   id: string
   description: string
-  quantity?: number
-  unitPrice: number
+  amount: number
 }
 
 export interface Invoice {
@@ -14,10 +13,8 @@ export interface Invoice {
   date: string
   billTo: string
   lineItems: LineItem[]
-  taxRate: number
   other: number
   subtotal: number
-  tax: number
   total: number
   template: TemplateId
   createdAt: string
@@ -40,7 +37,6 @@ export interface Settings {
   email: string
   checkPayableTo: string
   comments: string
-  defaultTaxRate: number
   defaultOther: number
   defaultTemplate: TemplateId
   autoDownload: boolean
@@ -51,7 +47,6 @@ import { COMPANY_DEFAULTS } from './config'
 
 export const DEFAULT_SETTINGS: Settings = {
   ...COMPANY_DEFAULTS,
-  defaultTaxRate: 0,
   defaultOther: 0,
   defaultTemplate: 'classic',
   autoDownload: true,

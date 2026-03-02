@@ -77,25 +77,18 @@ export async function generateMinimalPdf(invoice: Invoice, settings: Settings): 
 
   // ── Line items ────────────────────────────────────────────────────────────────
   const tableW = width - margin * 2
-  const colQty = margin + tableW * 0.58
-  const colUnit = margin + tableW * 0.72
-  const colAmt = margin + tableW * 0.87
+  const colAmt = margin + tableW * 0.75
 
   // Column headers
   drawText(page, 'DESCRIPTION', margin, y, bold, 7, MID)
-  drawText(page, 'QTY', colQty, y, bold, 7, MID)
-  drawText(page, 'UNIT PRICE', colUnit, y, bold, 7, MID)
   drawText(page, 'AMOUNT', colAmt, y, bold, 7, MID)
   y -= 4
   page.drawLine({ start: { x: margin, y }, end: { x: width - margin, y }, thickness: 0.3, color: LIGHT_RULE })
   y -= 12
 
   invoice.lineItems.forEach((item) => {
-    const lineTotal = (item.quantity ?? 1) * item.unitPrice
     drawText(page, item.description, margin, y, regular, 9)
-    drawText(page, String(item.quantity ?? 1), colQty, y, regular, 9)
-    drawText(page, formatCurrency(item.unitPrice), colUnit, y, regular, 9)
-    drawText(page, formatCurrency(lineTotal), colAmt, y, regular, 9)
+    drawText(page, formatCurrency(item.amount), colAmt, y, regular, 9)
     y -= 14
     page.drawLine({ start: { x: margin, y: y + 2 }, end: { x: width - margin, y: y + 2 }, thickness: 0.2, color: LIGHT_RULE })
   })
@@ -107,7 +100,6 @@ export async function generateMinimalPdf(invoice: Invoice, settings: Settings): 
 
   const totalsRows: [string, string, boolean][] = [
     ['Subtotal', formatCurrency(invoice.subtotal), false],
-    [`Tax (${(invoice.taxRate * 100).toFixed(1)}%)`, formatCurrency(invoice.tax), false],
     ['Other', formatCurrency(invoice.other), false],
   ]
   totalsRows.forEach(([label, val]) => {

@@ -183,16 +183,12 @@ export async function generateClassicPdf(invoice: Invoice, settings: Settings): 
 
   // Column X positions (left edge of each column)
   const colDescX = margin
-  const colQtyX = margin + Math.round(contentW * 0.57)
-  const colUnitX = margin + Math.round(contentW * 0.70)
-  const colAmtX = margin + Math.round(contentW * 0.84)
+  const colAmtX = margin + Math.round(contentW * 0.75)
   const tableRight = margin + contentW
 
   // Header row
   rect(page, margin, y - headerH, contentW, headerH, BLUE)
   text(page, 'DESCRIPTION', colDescX + 5, y - headerH + 5, bold, 9, WHITE)
-  textCenter(page, 'QTY', colQtyX, colUnitX - colQtyX, y - headerH + 5, bold, 9, WHITE)
-  textCenter(page, 'UNIT PRICE', colUnitX, colAmtX - colUnitX, y - headerH + 5, bold, 9, WHITE)
   textCenter(page, 'AMOUNT', colAmtX, tableRight - colAmtX, y - headerH + 5, bold, 9, WHITE)
   y -= headerH
 
@@ -202,17 +198,10 @@ export async function generateClassicPdf(invoice: Invoice, settings: Settings): 
     const fillColor = i % 2 === 0 ? LIGHT_GRAY : WHITE
     rect(page, margin, y - rowH, contentW, rowH, fillColor)
 
-    const lineTotal = (item.quantity ?? 1) * item.unitPrice
     const textY = y - rowH + 5
 
     text(page, item.description, colDescX + 5, textY, regular, 9)
-
-    const qtyStr = String(item.quantity ?? 1)
-    textCenter(page, qtyStr, colQtyX, colUnitX - colQtyX, textY, regular, 9)
-
-    textCenter(page, formatCurrency(item.unitPrice), colUnitX, colAmtX - colUnitX, textY, regular, 9)
-
-    textRight(page, formatCurrency(lineTotal), tableRight - 5, textY, regular, 9)
+    textRight(page, formatCurrency(item.amount), tableRight - 5, textY, regular, 9)
 
     y -= rowH
   })
@@ -220,17 +209,14 @@ export async function generateClassicPdf(invoice: Invoice, settings: Settings): 
   // Border around entire table (overlay on top of row fills)
   border(page, margin, y, contentW, tableBodyTop - y + headerH)
 
-  // Vertical column dividers
+  // Vertical column divider
   const dividerTop = tableBodyTop + headerH  // top of header
   const dividerBottom = y
-  ;[colQtyX, colUnitX, colAmtX].forEach(cx => {
-    hline(page, cx, cx, dividerTop, BORDER_COLOR, 0.4)  // vertical via drawLine
-    page.drawLine({
-      start: { x: cx, y: dividerBottom },
-      end: { x: cx, y: dividerTop },
-      thickness: 0.4,
-      color: BORDER_COLOR,
-    })
+  page.drawLine({
+    start: { x: colAmtX, y: dividerBottom },
+    end: { x: colAmtX, y: dividerTop },
+    thickness: 0.4,
+    color: BORDER_COLOR,
   })
 
   // ── TOTALS (right-aligned block) ─────────────────────────────────────────────
@@ -241,8 +227,6 @@ export async function generateClassicPdf(invoice: Invoice, settings: Settings): 
 
   const totalsRows: Array<[string, string, boolean]> = [
     ['SUBTOTAL', formatCurrency(invoice.subtotal), false],
-    ['TAX RATE', `${(invoice.taxRate * 100).toFixed(3)}%`, false],
-    ['TAX', formatCurrency(invoice.tax), false],
     ['OTHER', formatCurrency(invoice.other), false],
     ['TOTAL', formatCurrency(invoice.total), true],
   ]

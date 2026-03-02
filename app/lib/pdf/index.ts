@@ -3,15 +3,34 @@ import { generateClassicPdf } from './classic'
 import { generateModernPdf } from './modern'
 import { generateMinimalPdf } from './minimal'
 
+// WinAnsi (used by standard PDF fonts) can't encode control characters.
+// Strip everything in the C0 range except newline, which is used for multi-line fields.
+function stripControlChars(s: string): string {
+  return s.replace(/[\x00-\x09\x0B-\x1F\x7F]/g, '')
+}
+
+function sanitizeInvoice(invoice: Invoice): Invoice {
+  return {
+    ...invoice,
+    customerId: stripControlChars(invoice.customerId),
+    billTo: stripControlChars(invoice.billTo),
+    lineItems: invoice.lineItems.map(item => ({
+      ...item,
+      description: stripControlChars(item.description),
+    })),
+  }
+}
+
 export async function generatePdf(invoice: Invoice, settings: Settings): Promise<Uint8Array> {
-  switch (invoice.template) {
+  const sanitized = sanitizeInvoice(invoice)
+  switch (sanitized.template) {
     case 'modern':
-      return generateModernPdf(invoice, settings)
+      return generateModernPdf(sanitized, settings)
     case 'minimal':
-      return generateMinimalPdf(invoice, settings)
+      return generateMinimalPdf(sanitized, settings)
     case 'classic':
     default:
-      return generateClassicPdf(invoice, settings)
+      return generateClassicPdf(sanitized, settings)
   }
 }
 

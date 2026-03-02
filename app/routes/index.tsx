@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { CustomerCombobox } from '../components/CustomerCombobox'
 import { LineItemsEditor } from '../components/LineItemsEditor'
 import { TemplateSelector } from '../components/TemplateSelector'
-import { calcSubtotal, calcTax, calcTotal, formatCurrency } from '../lib/calculations'
+import { calcSubtotal, calcTotal, formatCurrency } from '../lib/calculations'
 import { generatePdf, downloadPdf } from '../lib/pdf/index'
 import { getSettings, saveSettings, saveInvoice } from '../lib/storage'
 import type { Invoice, LineItem, TemplateId } from '../lib/types'
@@ -25,9 +25,8 @@ function InvoicePage() {
   const [date, setDate] = useState(today())
   const [billTo, setBillTo] = useState('')
   const [lineItems, setLineItems] = useState<LineItem[]>([
-    { id: crypto.randomUUID(), description: '', quantity: 1, unitPrice: 0 },
+    { id: crypto.randomUUID(), description: '', amount: 0 },
   ])
-  const [taxRate, setTaxRate] = useState(settings.defaultTaxRate)
   const [other, setOther] = useState(settings.defaultOther)
   const [template, setTemplate] = useState<TemplateId>(settings.defaultTemplate)
   const [autoDownload, setAutoDownload] = useState(settings.autoDownload)
@@ -36,8 +35,7 @@ function InvoicePage() {
   const [success, setSuccess] = useState(false)
 
   const subtotal = calcSubtotal(lineItems)
-  const tax = calcTax(subtotal, taxRate)
-  const total = calcTotal(subtotal, tax, other)
+  const total = calcTotal(subtotal, other)
 
   function handleCustomerChange(name: string, id: string, bt: string) {
     setCustomerName(name)
@@ -67,10 +65,8 @@ function InvoicePage() {
         date,
         billTo,
         lineItems,
-        taxRate,
         other,
         subtotal,
-        tax,
         total,
         template,
         createdAt: new Date().toISOString(),
@@ -85,7 +81,8 @@ function InvoicePage() {
       setInvoiceNumber(invoiceNumber + 1)
 
       if (autoDownload) {
-        downloadPdf(pdfBytes, `invoice-${invoiceNumber}.pdf`)
+        const filename = `${customerName.trim() || 'Invoice'} ${invoiceNumber}.pdf`
+        downloadPdf(pdfBytes, filename)
       } else {
         // Open in new tab
         const blob = new Blob([new Uint8Array(pdfBytes)], { type: 'application/pdf' })
@@ -160,40 +157,23 @@ function InvoicePage() {
           <LineItemsEditor items={lineItems} onChange={setLineItems} />
         </div>
 
-        {/* Tax / Other / Totals */}
-        <div className="grid grid-cols-2 gap-4">
-          <FormField label="Tax Rate (%)">
-            <input
-              className={inputCls}
-              type="number"
-              min="0"
-              max="100"
-              step="0.1"
-              value={(taxRate * 100).toFixed(1)}
-              onChange={e => setTaxRate(parseFloat(e.target.value) / 100 || 0)}
-            />
-          </FormField>
-          <FormField label="Other ($)">
-            <input
-              className={inputCls}
-              type="number"
-              min="0"
-              step="0.01"
-              value={other}
-              onChange={e => setOther(parseFloat(e.target.value) || 0)}
-            />
-          </FormField>
-        </div>
+        {/* Other */}
+        <FormField label="Other ($)">
+          <input
+            className={inputCls}
+            type="number"
+            min="0"
+            step="0.01"
+            value={other}
+            onChange={e => setOther(parseFloat(e.target.value) || 0)}
+          />
+        </FormField>
 
         {/* Calculated totals */}
         <div className="bg-gray-50 rounded-xl p-4 space-y-1.5">
           <div className="flex justify-between text-sm text-gray-600">
             <span>Subtotal</span>
             <span className="tabular-nums">{formatCurrency(subtotal)}</span>
-          </div>
-          <div className="flex justify-between text-sm text-gray-600">
-            <span>Tax ({(taxRate * 100).toFixed(1)}%)</span>
-            <span className="tabular-nums">{formatCurrency(tax)}</span>
           </div>
           {other !== 0 && (
             <div className="flex justify-between text-sm text-gray-600">

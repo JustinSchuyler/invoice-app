@@ -100,26 +100,19 @@ export async function generateModernPdf(invoice: Invoice, settings: Settings): P
 
   const tableW = width - margin * 2
   const colDesc = margin
-  const colQty = margin + tableW * 0.55
-  const colUnit = margin + tableW * 0.7
-  const colAmt = margin + tableW * 0.85
+  const colAmt = margin + tableW * 0.75
 
   // Header row
   drawRect(page, margin, y - 16, tableW, 20, CHARCOAL)
   drawText(page, 'DESCRIPTION', colDesc + 6, y - 11, bold, 8, WHITE)
-  drawText(page, 'QTY', colQty, y - 11, bold, 8, WHITE)
-  drawText(page, 'UNIT PRICE', colUnit, y - 11, bold, 8, WHITE)
   drawText(page, 'AMOUNT', colAmt, y - 11, bold, 8, WHITE)
   y -= 16
 
   invoice.lineItems.forEach((item, i) => {
     const rowColor = i % 2 === 0 ? LIGHT : WHITE
     drawRect(page, margin, y - 14, tableW, 14, rowColor)
-    const lineTotal = (item.quantity ?? 1) * item.unitPrice
     drawText(page, item.description, colDesc + 6, y - 10, regular, 9)
-    drawText(page, String(item.quantity ?? 1), colQty, y - 10, regular, 9)
-    drawText(page, formatCurrency(item.unitPrice), colUnit, y - 10, regular, 9)
-    drawText(page, formatCurrency(lineTotal), colAmt, y - 10, regular, 9)
+    drawText(page, formatCurrency(item.amount), colAmt, y - 10, regular, 9)
     y -= 14
   })
 
@@ -130,7 +123,6 @@ export async function generateModernPdf(invoice: Invoice, settings: Settings): P
 
   const totalsRows: [string, string, boolean][] = [
     ['Subtotal', formatCurrency(invoice.subtotal), false],
-    [`Tax (${(invoice.taxRate * 100).toFixed(1)}%)`, formatCurrency(invoice.tax), false],
     ['Other', formatCurrency(invoice.other), false],
   ]
   totalsRows.forEach(([label, val]) => {

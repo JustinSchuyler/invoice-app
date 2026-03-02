@@ -81,17 +81,6 @@ export function SettingsPanel({ open, onClose }: Props) {
                 onChange={e => update('comments', e.target.value)}
               />
             </Field>
-            <Field label="Default Tax Rate (%)">
-              <input
-                className={inputCls}
-                type="number"
-                min="0"
-                max="100"
-                step="0.1"
-                value={(form.defaultTaxRate * 100).toFixed(1)}
-                onChange={e => update('defaultTaxRate', parseFloat(e.target.value) / 100 || 0)}
-              />
-            </Field>
             <Field label="Default Other ($)">
               <input
                 className={inputCls}
