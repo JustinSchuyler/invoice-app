@@ -4,7 +4,7 @@ import { getCustomers } from '../lib/storage'
 
 interface Props {
   value: string
-  onChange: (name: string, customerId: string, billTo: string) => void
+  onChange: (name: string, customerId: string, billTo: string, dbId: string, defaultLineItems: import('../lib/types').LineItem[]) => void
 }
 
 export function CustomerCombobox({ value, onChange }: Props) {
@@ -41,14 +41,13 @@ export function CustomerCombobox({ value, onChange }: Props) {
   function selectCustomer(c: Customer) {
     setQuery(c.name)
     setOpen(false)
-    onChange(c.name, c.customerId, c.billTo)
+    onChange(c.name, c.customerId, c.billTo, c.id, c.defaultLineItems)
   }
 
   function handleInput(val: string) {
     setQuery(val)
     setOpen(true)
-    // If user types freely, update only the name portion
-    onChange(val, '', '')
+    onChange(val, '', '', '', [])
   }
 
   return (

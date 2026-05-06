@@ -1,7 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
+import { LineItemsEditor } from '../components/LineItemsEditor'
 import { deleteCustomer, getCustomers, saveCustomer } from '../lib/storage'
-import type { Customer } from '../lib/types'
+import type { Customer, LineItem } from '../lib/types'
 
 export const Route = createFileRoute('/customers')({
   component: CustomersPage,
@@ -10,7 +11,7 @@ export const Route = createFileRoute('/customers')({
 type Mode = 'list' | 'new' | 'edit'
 
 function emptyForm(): Omit<Customer, 'id' | 'createdAt'> {
-  return { customerId: '', name: '', billTo: '' }
+  return { customerId: '', name: '', billTo: '', defaultLineItems: [] }
 }
 
 function CustomersPage() {
@@ -36,7 +37,7 @@ function CustomersPage() {
   }
 
   function openEdit(c: Customer) {
-    setForm({ customerId: c.customerId, name: c.name, billTo: c.billTo })
+    setForm({ customerId: c.customerId, name: c.name, billTo: c.billTo, defaultLineItems: c.defaultLineItems })
     setEditingId(c.id)
     setError('')
     setMode('edit')
@@ -52,6 +53,7 @@ function CustomersPage() {
       customerId: form.customerId,
       name: form.name,
       billTo: form.billTo,
+      defaultLineItems: form.defaultLineItems,
       createdAt: new Date().toISOString(),
     }
     saveCustomer(customer)
@@ -97,6 +99,15 @@ function CustomersPage() {
               placeholder={"John Smith\n123 Main St\nSpringfield, IL 62701"}
               value={form.billTo}
               onChange={e => setForm(f => ({ ...f, billTo: e.target.value }))}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Default Line Items</label>
+            <p className="text-xs text-gray-500 mb-2">These auto-populate when this customer is selected on a new invoice.</p>
+            <LineItemsEditor
+              items={form.defaultLineItems}
+              onChange={(items: LineItem[]) => setForm(f => ({ ...f, defaultLineItems: items }))}
             />
           </div>
 

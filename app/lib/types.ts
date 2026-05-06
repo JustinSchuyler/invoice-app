@@ -25,6 +25,7 @@ export interface Customer {
   customerId: string
   name: string
   billTo: string
+  defaultLineItems: LineItem[]
   createdAt: string
 }
 

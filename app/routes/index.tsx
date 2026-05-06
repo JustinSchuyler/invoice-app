@@ -5,7 +5,7 @@ import { LineItemsEditor } from '../components/LineItemsEditor'
 import { TemplateSelector } from '../components/TemplateSelector'
 import { calcSubtotal, calcTotal, formatCurrency } from '../lib/calculations'
 import { generatePdf, downloadPdf } from '../lib/pdf/index'
-import { getSettings, saveSettings, saveInvoice } from '../lib/storage'
+import { getSettings, saveSettings, saveInvoice, saveCustomer, getCustomers } from '../lib/storage'
 import type { Invoice, LineItem, TemplateId } from '../lib/types'
 
 export const Route = createFileRoute('/')({
@@ -22,6 +22,7 @@ function InvoicePage() {
   const [invoiceNumber, setInvoiceNumber] = useState(settings.nextInvoiceNumber)
   const [customerName, setCustomerName] = useState('')
   const [customerId, setCustomerId] = useState('')
+  const [selectedCustomerDbId, setSelectedCustomerDbId] = useState('')
   const [date, setDate] = useState(today())
   const [billTo, setBillTo] = useState('')
   const [lineItems, setLineItems] = useState<LineItem[]>([
@@ -37,10 +38,14 @@ function InvoicePage() {
   const subtotal = calcSubtotal(lineItems)
   const total = calcTotal(subtotal, other)
 
-  function handleCustomerChange(name: string, id: string, bt: string) {
+  function handleCustomerChange(name: string, id: string, bt: string, dbId: string, defaultLineItems: LineItem[]) {
     setCustomerName(name)
+    setSelectedCustomerDbId(dbId)
     if (id) setCustomerId(id)
     if (bt) setBillTo(bt)
+    if (defaultLineItems.length > 0) {
+      setLineItems(defaultLineItems.map(item => ({ ...item, id: crypto.randomUUID() })))
+    }
   }
 
   async function handleGenerate() {
@@ -74,6 +79,27 @@ function InvoicePage() {
 
       const pdfBytes = await generatePdf(invoice, settings)
       saveInvoice(invoice)
+
+      // Merge invoice line items into the selected customer's defaults
+      if (selectedCustomerDbId) {
+        const allCustomers = getCustomers()
+        const customer = allCustomers.find(c => c.id === selectedCustomerDbId)
+        if (customer) {
+          const updatedDefaults = [...customer.defaultLineItems]
+          for (const item of lineItems) {
+            if (!item.description.trim()) continue
+            const existingIdx = updatedDefaults.findIndex(
+              d => d.description.trim().toLowerCase() === item.description.trim().toLowerCase()
+            )
+            if (existingIdx >= 0) {
+              updatedDefaults[existingIdx] = { ...updatedDefaults[existingIdx], amount: item.amount }
+            } else {
+              updatedDefaults.push({ id: crypto.randomUUID(), description: item.description, amount: item.amount })
+            }
+          }
+          saveCustomer({ ...customer, defaultLineItems: updatedDefaults })
+        }
+      }
 
       // Increment invoice number
       const updatedSettings = { ...settings, nextInvoiceNumber: invoiceNumber + 1 }

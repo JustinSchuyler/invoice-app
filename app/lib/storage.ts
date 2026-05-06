@@ -54,7 +54,9 @@ export function deleteInvoice(id: string): void {
 
 // Customers
 export function getCustomers(): Customer[] {
-  return get<Customer[]>(KEYS.customers, [])
+  const customers = get<Customer[]>(KEYS.customers, [])
+  // backfill defaultLineItems for customers saved before this field existed
+  return customers.map(c => ({ ...c, defaultLineItems: c.defaultLineItems ?? [] }))
 }
 
 export function saveCustomer(customer: Customer): void {
