@@ -51,4 +51,5 @@ export const DEFAULT_SETTINGS: Settings = {
   defaultOther: 0,
   defaultTemplate: 'classic',
   autoDownload: true,
+  nextInvoiceNumber: 1,
 }
